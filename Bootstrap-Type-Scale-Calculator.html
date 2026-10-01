@@ -1,0 +1,352 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Bootstrap Type Scale Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control rail on the left, live specimen ladder + code output on the right; stacks on phones */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #141a24;
+  --muted: #5b6577;
+  --line: #d9dee7;
+  --accent: #2f55d4;
+  --accent-soft: #e5ebfc;
+  --display-tint: #8a3ffc;
+  --display-soft: #f0e7ff;
+  --code-bg: #121822;
+  --code-ink: #dbe3f0;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131b; --surface: #161d28; --ink: #e8edf5; --muted: #95a0b3; --line: #2a3443;
+    --accent: #7f9cff; --accent-soft: #1f2a48; --display-tint: #b98cff; --display-soft: #2a1f42;
+    --code-bg: #0a0e14; --code-ink: #dbe3f0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131b; --surface: #161d28; --ink: #e8edf5; --muted: #95a0b3; --line: #2a3443;
+  --accent: #7f9cff; --accent-soft: #1f2a48; --display-tint: #b98cff; --display-soft: #2a1f42;
+  --code-bg: #0a0e14; --code-ink: #dbe3f0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 24px; }
+h1.title { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+.grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.controls { display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+@media (max-width: 860px) { .controls { position: static; } }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label, .eyebrow { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.field .hint { font-size: 0.8rem; color: var(--muted); }
+select, input[type="number"], input[type="text"] {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px 10px; width: 100%;
+}
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.custom[hidden] { display: none !important; }
+.swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.sw-h { background: var(--accent); }
+.sw-d { background: var(--display-tint); }
+.formula { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); background: var(--bg); border-radius: 6px; padding: 10px; line-height: 1.6; }
+
+.main { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+
+/* Ladder */
+.ladder { display: flex; flex-direction: column; }
+.step { display: grid; grid-template-columns: 112px 92px 56px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.step:first-child { border-top: 0; }
+.tag { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 500; padding: 3px 8px; border-radius: 4px; justify-self: start; }
+.step.is-d .tag { background: var(--display-soft); color: var(--display-tint); }
+.step.is-h .tag { background: var(--accent-soft); color: var(--accent); }
+.step.is-p .tag { background: var(--bg); color: var(--muted); }
+.val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.px { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.8rem; color: var(--muted); }
+.spec { overflow-x: auto; white-space: nowrap; line-height: 1.15; font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; scrollbar-width: thin; padding-block: 2px; }
+.step.is-p .spec { font-family: var(--font-body); font-weight: 400; letter-spacing: 0; }
+.divider { display: flex; align-items: center; gap: 10px; padding: 10px 0 4px; border-top: 1px dashed var(--line); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+@media (max-width: 560px) {
+  .step { grid-template-columns: auto auto 1fr; row-gap: 6px; }
+  .step .spec { grid-column: 1 / -1; }
+  .px { justify-self: end; }
+}
+
+/* Code */
+.codehead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.tabs { display: flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 8px; }
+.tabs button { font: inherit; font-size: 0.85rem; border: 0; background: transparent; color: var(--muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.copy { font: inherit; font-size: 0.85rem; font-weight: 600; border: 0; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+:root[data-theme="dark"] .copy { color: #0e131b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .copy { color: #0e131b; } }
+pre { margin: 0; background: var(--code-bg); color: var(--code-ink); border-radius: 8px; padding: 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; }
+.note { font-size: 0.82rem; color: var(--muted); margin: 10px 0 0; }
+@media (prefers-reduced-motion: no-preference) { .spec { transition: font-size .18s ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 class="title">Bootstrap Type Scale Calculator</h1>
+    <p>Pick a scale for the headings and one for the display classes. Display-6 sits one display step above h1, and each display size climbs from there.</p>
+  </header>
+
+  <div class="grid">
+    <aside class="panel controls" aria-label="Scale settings">
+      <div class="field">
+        <label for="base">Body size (p)</label>
+        <div class="row2">
+          <input id="base" type="number" min="8" max="32" step="0.5" value="16" aria-describedby="base-hint">
+          <select id="unit" aria-label="Output unit">
+            <option value="rem" selected>rem</option>
+            <option value="px">px</option>
+          </select>
+        </div>
+        <span class="hint" id="base-hint">In px. Equals 1rem when 16.</span>
+      </div>
+
+      <div class="field">
+        <label for="hScale"><span class="swatch sw-h"></span>Heading scale (p → h1)</label>
+        <select id="hScale"></select>
+        <input class="custom" id="hCustom" type="number" min="1.01" max="3" step="0.001" value="1.2" aria-label="Custom heading ratio" hidden>
+      </div>
+
+      <div class="field">
+        <label for="dScale"><span class="swatch sw-d"></span>Display scale (h1 → display-1)</label>
+        <select id="dScale"></select>
+        <input class="custom" id="dCustom" type="number" min="1.01" max="3" step="0.001" value="1.125" aria-label="Custom display ratio" hidden>
+      </div>
+
+      <div class="field">
+        <label for="decimals">Decimal places</label>
+        <select id="decimals">
+          <option value="2">2</option>
+          <option value="3" selected>3 (matches typescale.com)</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="sample">Preview text</label>
+        <input id="sample" type="text" value="Visual hierarchy">
+      </div>
+
+      <div class="formula" id="formula" aria-live="polite"></div>
+    </aside>
+
+    <div class="main">
+      <section class="panel" aria-labelledby="ladder-h">
+        <div class="codehead">
+          <span class="eyebrow" id="ladder-h">Scale</span>
+          <span class="px" id="summary"></span>
+        </div>
+        <div class="ladder" id="ladder"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="code-h">
+        <div class="codehead">
+          <div class="tabs" role="tablist" aria-label="Output format" id="code-h">
+            <button role="tab" id="tab-scss" aria-selected="true" data-fmt="scss">Bootstrap Sass</button>
+            <button role="tab" id="tab-css" aria-selected="false" data-fmt="css">CSS variables</button>
+            <button role="tab" id="tab-util" aria-selected="false" data-fmt="util">Plain CSS</button>
+          </div>
+          <button class="copy" id="copy">Copy code</button>
+        </div>
+        <pre id="code" tabindex="0"></pre>
+        <p class="note" id="codenote"></p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SCALES = [
+    ["1.067", "Minor Second"],
+    ["1.125", "Major Second"],
+    ["1.200", "Minor Third"],
+    ["1.250", "Major Third"],
+    ["1.333", "Perfect Fourth"],
+    ["1.414", "Augmented Fourth"],
+    ["1.500", "Perfect Fifth"],
+    ["1.618", "Golden Ratio"],
+    ["custom", "Custom…"]
+  ];
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    base: $("base"), unit: $("unit"), hScale: $("hScale"), dScale: $("dScale"),
+    hCustom: $("hCustom"), dCustom: $("dCustom"), decimals: $("decimals"), sample: $("sample"),
+    ladder: $("ladder"), code: $("code"), formula: $("formula"), summary: $("summary"), codenote: $("codenote")
+  };
+  let fmt = "scss";
+
+  for (const sel of [els.hScale, els.dScale]) {
+    for (const [v, name] of SCALES) {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v === "custom" ? name : `${v} – ${name}`;
+      sel.appendChild(o);
+    }
+  }
+  els.hScale.value = "1.200";
+  els.dScale.value = "1.125";
+
+  // Restore last settings (per-viewer convenience only)
+  try {
+    const saved = JSON.parse(localStorage.getItem("bs-typescale") || "null");
+    if (saved) {
+      for (const k of ["base", "unit", "hScale", "dScale", "hCustom", "dCustom", "decimals", "sample"]) {
+        if (saved[k] != null) els[k].value = saved[k];
+      }
+      if (saved.fmt) fmt = saved.fmt;
+    }
+  } catch (e) {}
+
+  function ratio(sel, custom) {
+    const v = sel.value === "custom" ? parseFloat(custom.value) : parseFloat(sel.value);
+    return isFinite(v) && v > 1 ? v : 1.2;
+  }
+  function round(n, d) { const f = Math.pow(10, d); return (Math.round(n * f) / f).toFixed(d); }
+
+  function compute() {
+    const base = Math.max(1, parseFloat(els.base.value) || 16);
+    const h = ratio(els.hScale, els.hCustom);
+    const d = ratio(els.dScale, els.dCustom);
+    const h1 = Math.pow(h, 6); // in rem relative to base
+    const rows = [];
+    for (let i = 1; i <= 6; i++) {
+      rows.push({ key: `display-${i}`, n: i, kind: "d", rem: h1 * Math.pow(d, 7 - i) });
+    }
+    for (let i = 1; i <= 6; i++) {
+      rows.push({ key: `h${i}`, n: i, kind: "h", rem: Math.pow(h, 7 - i) });
+    }
+    rows.push({ key: "p", kind: "p", rem: 1 });
+    return { base, h, d, rows };
+  }
+
+  function fmtVal(rem, base, unit, dec) {
+    return unit === "px" ? round(rem * base, dec === 2 ? 1 : 2) + "px" : round(rem, dec) + "rem";
+  }
+
+  function render() {
+    els.hCustom.hidden = els.hScale.value !== "custom";
+    els.dCustom.hidden = els.dScale.value !== "custom";
+    const { base, h, d, rows } = compute();
+    const unit = els.unit.value;
+    const dec = parseInt(els.decimals.value, 10);
+    const sample = els.sample.value || "Aa";
+
+    els.ladder.textContent = "";
+    rows.forEach((r, idx) => {
+      if (idx === 6) {
+        const div = document.createElement("div");
+        div.className = "divider";
+        div.textContent = `× ${d} between displays · × ${h} between headings`;
+        els.ladder.appendChild(div);
+      }
+      const row = document.createElement("div");
+      row.className = `step is-${r.kind}`;
+      const tag = document.createElement("span"); tag.className = "tag";
+      tag.textContent = r.kind === "d" ? `.${r.key}` : r.key;
+      const val = document.createElement("span"); val.className = "val";
+      val.textContent = fmtVal(r.rem, base, unit, dec);
+      const px = document.createElement("span"); px.className = "px";
+      px.textContent = unit === "px" ? round(r.rem, 3) + "rem" : Math.round(r.rem * base) + "px";
+      const spec = document.createElement("div"); spec.className = "spec";
+      spec.style.fontSize = (r.rem * base) + "px";
+      spec.textContent = sample;
+      row.append(tag, val, px, spec);
+      els.ladder.appendChild(row);
+    });
+
+    els.summary.textContent = `display-6 = h1 × ${d}`;
+    els.formula.innerHTML =
+      `h<i>n</i> = ${h}<sup>7−n</sup><br>` +
+      `display-<i>n</i> = h1 × ${d}<sup>7−n</sup><br>` +
+      `1rem = ${base}px`;
+
+    els.code.textContent = buildCode(rows, base, unit, dec);
+    els.codenote.textContent = {
+      scss: "Set these before @import \"bootstrap\". Bootstrap's RFS shrinks the larger sizes on narrow screens automatically.",
+      css: "Custom properties you can reference anywhere, e.g. font-size: var(--fs-display-1).",
+      util: "Direct overrides for compiled Bootstrap CSS. RFS won't apply, so large display sizes stay fixed on phones."
+    }[fmt];
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.fmt === fmt)));
+
+    try {
+      localStorage.setItem("bs-typescale", JSON.stringify({
+        base: els.base.value, unit: els.unit.value, hScale: els.hScale.value, dScale: els.dScale.value,
+        hCustom: els.hCustom.value, dCustom: els.dCustom.value, decimals: els.decimals.value,
+        sample: els.sample.value, fmt
+      }));
+    } catch (e) {}
+  }
+
+  function buildCode(rows, base, unit, dec) {
+    const v = (r) => fmtVal(r.rem, base, unit, dec);
+    const disp = rows.filter(r => r.kind === "d");
+    const heads = rows.filter(r => r.kind === "h");
+    const scaleLabel = (sel, custom) => {
+      if (sel.value === "custom") return `${custom.value} (custom)`;
+      const s = SCALES.find(x => x[0] === sel.value); return `${s[0]} ${s[1]}`;
+    };
+    const header = `Headings: ${scaleLabel(els.hScale, els.hCustom)} · Display: ${scaleLabel(els.dScale, els.dCustom)} · base ${base}px`;
+
+    if (fmt === "scss") {
+      let out = `// ${header}\n`;
+      out += `$font-size-base: ${unit === "px" ? base + "px" : "1rem"};\n\n`;
+      heads.forEach(r => out += `$${r.key}-font-size: ${v(r)};\n`);
+      out += `\n$display-font-sizes: (\n`;
+      disp.forEach((r, i) => out += `  ${r.n}: ${v(r)}${i < disp.length - 1 ? "," : ""}\n`);
+      out += `);\n\n@import "bootstrap/scss/bootstrap";`;
+      return out;
+    }
+    if (fmt === "css") {
+      let out = `/* ${header} */\n:root {\n`;
+      disp.forEach(r => out += `  --fs-${r.key}: ${v(r)};\n`);
+      heads.forEach(r => out += `  --fs-${r.key}: ${v(r)};\n`);
+      out += `  --fs-p: ${v(rows[rows.length - 1])};\n}`;
+      return out;
+    }
+    let out = `/* ${header} */\n`;
+    heads.forEach(r => out += `${r.key}, .${r.key} { font-size: ${v(r)}; }\n`);
+    out += `\n`;
+    disp.forEach(r => out += `.${r.key} { font-size: ${v(r)}; }\n`);
+    return out.trimEnd();
+  }
+
+  ["input", "change"].forEach(evt => {
+    for (const k of ["base", "unit", "hScale", "dScale", "hCustom", "dCustom", "decimals", "sample"]) {
+      els[k].addEventListener(evt, render);
+    }
+  });
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { fmt = b.dataset.fmt; render(); }));
+
+  $("copy").addEventListener("click", () => {
+    const btn = $("copy");
+    const done = (msg) => { btn.textContent = msg; setTimeout(() => btn.textContent = "Copy code", 1600); };
+    const fallback = () => {
+      const range = document.createRange(); range.selectNodeContents(els.code);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(range);
+      done("Selected – press ⌘/Ctrl+C");
+    };
+    try {
+      navigator.clipboard.writeText(els.code.textContent).then(() => done("Copied"), fallback);
+    } catch (e) { fallback(); }
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
